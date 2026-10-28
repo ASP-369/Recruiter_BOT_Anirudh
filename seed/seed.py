@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 
 from app.db import SCHEMA_PATH, get_connection
+from app.matching import recompute_matches
 
 DATA_PATH = Path(__file__).resolve().parent / "data.json"
 
@@ -59,9 +60,11 @@ def seed() -> None:
             )
 
         conn.commit()
+        n_matches = recompute_matches(conn)
         tables = ("candidates", "jobs", "skills", "candidate_skills",
                   "job_required_skills", "candidate_traits", "job_culture_keywords")
         counts = {t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0] for t in tables}
+        counts["matches"] = n_matches
         print("Seeded:", counts)
     finally:
         conn.close()
